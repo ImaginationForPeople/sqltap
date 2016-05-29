@@ -142,7 +142,16 @@ ${group.first_word}
                 <tr class="${'hidden' if idx >= 3 else ''}">
                     <td>${'%.3f' % query.duration}</td>
                     % for param_name in params:
-                    <td>${query.params.get(param_name, '')}</td>
+                    <%
+                      from sqlalchemy.orm.exc import DetachedInstanceError
+                      try:
+                        param_value = query.params.get(param_name, '')
+                      except DetachedInstanceError as e:
+                        # Temporary patch: we should capture arguments upstream
+                        # https://github.com/inconshreveable/sqltap/pull/22
+                        param_value = e
+                    %>
+                    <td>${param_value}</td>
                     % endfor
                     <td>${'%d' % query.rowcount}</td>
                     <td>${'%d' % query.params_id}</td>
