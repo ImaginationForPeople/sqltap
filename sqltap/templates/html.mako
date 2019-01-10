@@ -66,6 +66,13 @@
                 <span class="label label-info pull-right" style="margin-right: 5px;">
                   ${len(group.queries)}q
                 </span>
+                % if group.single_user_context():
+                <span class="label label-info pull-right" style="margin-right: 5px;">
+                  ${group.single_user_context()}
+                </span>
+                % else:
+                <span class="label label-info pull-right" style="margin-right: 5px;">mixed</span>
+                % endif
 ${group.first_word}
               </a>
             </li>
@@ -137,6 +144,7 @@ ${group.first_word}
                 % endfor
                   <th>Row Count</th>
                   <th>Params ID</th>
+                  <th>Context</th>
                 </tr>
                 % for idx, query in enumerate(reversed(group.queries)):
                 <tr class="${'hidden' if idx >= 3 else ''}">
@@ -155,6 +163,7 @@ ${group.first_word}
                     % endfor
                     <td>${'%d' % query.rowcount}</td>
                     <td>${'%d' % query.params_id}</td>
+                    <td>${'%s' % query.user_context}</td>
                 </tr>
                 % endfor
               </table>

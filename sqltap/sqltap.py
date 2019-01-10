@@ -176,9 +176,10 @@ class ProfilingSession(object):
         start_time = getattr(conn, '_sqltap_query_start_time', end_time)
 
         # get the user's context
-        context = (None if not self.user_context_fn
-                   else self.user_context_fn(
-                        conn, clause, multiparams, params, results))
+        # context = (None if not self.user_context_fn
+        #            else self.user_context_fn(
+        #                 conn, clause, multiparams, params, results))
+        context = 'read' if getattr(conn.engine, 'is_readonly', False) else 'write'
 
         try:
             text = clause.compile(dialect=conn.engine.dialect)
@@ -280,6 +281,7 @@ class QueryGroup(object):
         self.rowcounts = 0
         self.mean = 0
         self.median = 0
+        self.user_contexts = set()
 
     def find_user_fn(self, stack):
         """ rough heuristic to try to figure out what user-defined func
@@ -316,6 +318,16 @@ class QueryGroup(object):
             params_id = self.ParamsID
         self.params_hashes[key] = (count + 1, params_id, params)
         q.params_id = q.params_id or params_id
+        self.user_contexts.add(q.user_context)
+
+    def single_user_context(self):
+        if len(self.user_contexts) == 1:
+            value = next(iter(self.user_contexts))
+            if value is not None:
+                return value
+
+    def has_user_contexts(self):
+        return self.user_contexts != {None}
 
     def calc_median(self):
         queries = sorted(self.queries, key=lambda q: q.duration,
